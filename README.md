@@ -158,3 +158,17 @@ El archivo [`bd/init.sql`](file:///c:/Users/Adrian/OneDrive/Documentos/ITESI/Ser
 ```bash
 mysql -u root -p monitor_team_db < init.sql
 ```
+
+## Commits
+
+Las issues de este proyecto están en `Monitor-Quintillizas/fronted`. Para que tus commits aparezcan en la issue, basta con escribir el número:
+
+```bash
+git commit -m "v1.2.0 #7"
+```
+
+El hook `.githooks/commit-msg` cambia `#7` por `Monitor-Quintillizas/fronted#7` al hacer el commit. Para activarlo, corre esto **una sola vez** en tu copia del repositorio (y otra vez si lo clonas en otra computadora):
+
+```bash
+git config core.hooksPath .githooks
+```
