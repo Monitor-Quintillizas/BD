@@ -30,9 +30,17 @@ CREATE TABLE IF NOT EXISTS METRICS (
     metric_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     host_id INT NOT NULL,
     cpu_usage_pct DECIMAL(5,2) NOT NULL,
+    cpu_cores_logical INT NULL,
+    cpu_cores_physical INT NULL,
+    ram_total_mb DECIMAL(10,2) NULL,
     ram_used_mb DECIMAL(10,2) NOT NULL,
+    ram_free_mb DECIMAL(10,2) NULL,
     ram_usage_pct DECIMAL(5,2) NOT NULL,
+    disk_total_gb DECIMAL(10,2) NULL,
+    disk_used_gb DECIMAL(10,2) NULL,
+    disk_free_gb DECIMAL(10,2) NULL,
     disk_usage_pct DECIMAL(5,2) NOT NULL,
+    uptime_seconds BIGINT NULL,
     measured_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (host_id) REFERENCES HOSTS(host_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -51,9 +51,17 @@ erDiagram
         bigint metric_id PK "AUTO_INCREMENT (Serie temporal)"
         int host_id FK "Referencia a HOSTS(host_id) ON DELETE CASCADE"
         decimal cpu_usage_pct "Porcentaje de CPU (0.00 a 100.00)"
+        int cpu_cores_logical "Nucleos logicos del CPU"
+        int cpu_cores_physical "Nucleos fisicos del CPU"
+        decimal ram_total_mb "RAM total en Megabytes"
         decimal ram_used_mb "Megabytes de RAM en uso"
+        decimal ram_free_mb "RAM disponible en Megabytes"
         decimal ram_usage_pct "Porcentaje de RAM (0.00 a 100.00)"
+        decimal disk_total_gb "Capacidad total del disco en GB"
+        decimal disk_used_gb "Espacio usado del disco en GB"
+        decimal disk_free_gb "Espacio libre del disco en GB"
         decimal disk_usage_pct "Porcentaje de Disco (0.00 a 100.00)"
+        bigint uptime_seconds "Tiempo encendido en segundos"
         datetime measured_at "Timestamp de muestreo"
     }
 
@@ -106,9 +114,17 @@ erDiagram
 | `metric_id` | `BIGINT` | NO | **PK** | AUTO_INCREMENT | Identificador de alta cardinalidad para series temporales. |
 | `host_id` | `INT` | NO | **FK** | - | Clave foránea referenciando `HOSTS(host_id)` con `ON DELETE CASCADE`. |
 | `cpu_usage_pct` | `DECIMAL(5,2)` | NO | - | - | Carga del procesador expresada en porcentaje (0.00% a 100.00%). |
+| `cpu_cores_logical` | `INT` | SÍ | - | `NULL` | Cantidad de hilos / procesadores lógicos reportados por el agente. |
+| `cpu_cores_physical` | `INT` | SÍ | - | `NULL` | Cantidad de núcleos físicos reportados por el agente. |
+| `ram_total_mb` | `DECIMAL(10,2)`| SÍ | - | `NULL` | Memoria RAM total instalada en Megabytes. |
 | `ram_used_mb` | `DECIMAL(10,2)`| NO | - | - | Memoria física utilizada en Megabytes. |
+| `ram_free_mb` | `DECIMAL(10,2)`| SÍ | - | `NULL` | Memoria RAM disponible en Megabytes. |
 | `ram_usage_pct` | `DECIMAL(5,2)` | NO | - | - | Carga de memoria RAM en porcentaje (0.00% a 100.00%). |
+| `disk_total_gb` | `DECIMAL(10,2)`| SÍ | - | `NULL` | Capacidad total del disco principal en Gigabytes. |
+| `disk_used_gb` | `DECIMAL(10,2)`| SÍ | - | `NULL` | Espacio ocupado del disco principal en Gigabytes. |
+| `disk_free_gb` | `DECIMAL(10,2)`| SÍ | - | `NULL` | Espacio disponible del disco principal en Gigabytes. |
 | `disk_usage_pct`| `DECIMAL(5,2)` | NO | - | - | Uso del disco duro principal en porcentaje (0.00% a 100.00%). |
+| `uptime_seconds`| `BIGINT` | SÍ | - | `NULL` | Tiempo de actividad del equipo en segundos desde el último arranque. |
 | `measured_at` | `DATETIME` | NO | - | `CURRENT_TIMESTAMP` | Estampa de tiempo exacta de captura de la muestra. |
 
 ### Tabla: `THRESHOLDS`
@@ -133,29 +149,7 @@ erDiagram
 
 ---
 
-## 4. Guía de Respuestas para Defensa Académica y Revisión Oral
-
-1. **¿Por qué `metric_id` y `alert_id` son de tipo `BIGINT` y no `INT`?**  
-   Las métricas se generan automáticamente cada 2.5 segundos por cada host conectado. Un entero estándar `INT` de 32 bits permite hasta ~2,147 millones de registros, lo que en sistemas de telemetría continuos puede desbordarse en mediano plazo. `BIGINT` (64 bits) permite hasta $9.22 \times 10^{18}$ registros, garantizando escalabilidad permanente sin desbordamiento de clave primaria (*Primary Key Overflow*).
-
-2. **¿Por qué se utiliza `DECIMAL(5,2)` en lugar de `FLOAT` o `DOUBLE`?**  
-   `FLOAT` y `DOUBLE` emplean representación binaria de punto flotante aproximada bajo el estándar IEEE 754, lo que provoca imprecisiones de redondeo decimal (ej. `80.00000019`). `DECIMAL(5,2)` es un tipo de dato numérico de punto fijo exacto en base 10 (con 3 dígitos enteros y 2 decimales, ej. `100.00`), ideal para umbrales de precisión donde la igualdad y comparación deben ser matemáticamente exactas.
-
-3. **¿Por qué `last_login_at` y `operating_system` permiten valores `NULL`?**  
-   Porque son campos opcionales en el momento de creación del registro. Cuando un usuario se crea por primera vez, aún no ha iniciado sesión, por lo que `last_login_at` debe ser `NULL`. De igual forma, un host puede ser registrado antes de conocerse con exactitud el nombre detallado de su sistema operativo.
-
-4. **¿Por qué la relación entre `HOSTS` y `METRICS` es de 1 a N (1:N)?**  
-   Porque un único equipo físico o servidor registrado en `HOSTS` genera múltiples muestras cronológicas de telemetría a lo largo del tiempo en `METRICS`.
-
-5. **¿Qué sucede si se elimina un registro de la tabla `HOSTS` o `USERS`?**  
-   Gracias a las restricciones `ON DELETE CASCADE` declaradas en las claves foráneas de `METRICS`, `THRESHOLDS` y `ALERTS`, si un host es dado de baja, todas sus métricas, reglas y alertas asociadas se eliminan de manera atómica y automática, preservando la integridad referencial y evitando la existencia de registros huérfanos en la base de datos.
-
-6. **¿Por qué `password_hash` tiene un tamaño de `VARCHAR(255)`?**  
-   Los algoritmos criptográficos como Bcrypt (`PASSWORD_BCRYPT`) o Argon2 generan cadenas de longitud variable con salting dinámico. Reservar 255 caracteres asegura compatibilidad total ante futuras actualizaciones de algoritmos de seguridad sin tener que modificar la estructura de la tabla.
-
----
-
-## 5. Ejecución y Restauración del Script SQL
+## 4. Ejecución y Restauración del Script SQL
 
 ### Vía Docker Compose (Automático):
 El archivo [`bd/init.sql`](file:///c:/Users/Adrian/OneDrive/Documentos/ITESI/Servicio%20Social/Monitor%20Quintillizas/bd/init.sql) se monta automáticamente en el directorio `/docker-entrypoint-initdb.d/` del contenedor MySQL para inicializar las tablas y datos de prueba al primer arranque.
